@@ -1,56 +1,137 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>AI Tutor Project</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brainbox AI Assistant</title>
     <style>
-    /* ... your existing styles ... */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #0f0f0f; 
+            color: white; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px; 
+            margin: 0;
+        }
+        h1 { margin-bottom: 20px; color: #007bff; }
 
-    #chat-box::-webkit-scrollbar {
-        width: 8px;
-    }
-    #chat-box::-webkit-scrollbar-track {
-        background: #1a1a1a;
-    }
-    #chat-box::-webkit-scrollbar-thumb {
-        background: #333;
-        border-radius: 10px;
-    }
-    #chat-box::-webkit-scrollbar-thumb:hover {
-        background: #444;
-    }
-</style>
+        #chat-box { 
+            width: 100%; 
+            max-width: 600px; 
+            height: 500px; 
+            background: #1a1a1a; 
+            border-radius: 12px; 
+            padding: 20px; 
+            overflow-y: auto; 
+            border: 1px solid #333; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        /* --- SLEEK SCROLLBAR --- */
+        #chat-box::-webkit-scrollbar { width: 8px; }
+        #chat-box::-webkit-scrollbar-track { background: #1a1a1a; }
+        #chat-box::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        #chat-box::-webkit-scrollbar-thumb:hover { background: #444; }
+
+        .input-area { 
+            width: 100%; 
+            max-width: 600px; 
+            display: flex; 
+            gap: 10px; 
+            margin-top: 20px; 
+        }
+        input { 
+            flex: 1; 
+            padding: 15px; 
+            border-radius: 8px; 
+            border: 1px solid #444; 
+            background: #252525; 
+            color: white; 
+            outline: none;
+        }
+        input:focus { border-color: #007bff; }
+        
+        button { 
+            padding: 0 20px; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: 0.3s;
+        }
+        .btn-send { background: #007bff; }
+        .btn-send:hover { background: #0056b3; }
+        .btn-clear { background: #dc3545; }
+        .btn-clear:hover { background: #a71d2a; }
+
+        .msg { margin-bottom: 15px; padding: 12px; border-radius: 8px; line-height: 1.4; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .user-msg { background: #007bff22; border-right: 4px solid #007bff; text-align: right; margin-left: 50px; }
+        .bot-msg { background: #28a74522; border-left: 4px solid #28a745; text-align: left; margin-right: 50px; }
+        img { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid #444; }
+    </style>
 </head>
 <body>
-    <h1>🤖 Personal AI Assistant</h1>
+    <h1>🤖 Brainbox AI</h1>
     <div id="chat-box"></div>
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Ask math, science, or 'draw a cat'...">
-        <button onclick="sendMessage()">Send</button>
+        <input type="text" id="userInput" placeholder="Ask math or 'draw a cat'...">
+        <button class="btn-send" onclick="sendMessage()">Send</button>
+        <button class="btn-clear" onclick="clearChat()">Clear</button>
     </div>
 
     <script>
-        async function sendMessage() {
-            const input = document.getElementById('userInput');
-            const chatBox = document.getElementById('chat-box');
-            if (!input.value.trim()) return;
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('userInput');
 
-            chatBox.innerHTML += `<div class="msg user-msg"><b>You:</b> ${input.value}</div>`;
-            
-            const response = await fetch('http://localhost:3000/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: input.value })
-            });
-            const data = await response.json();
-            
-            if (data.type === 'image') {
-                chatBox.innerHTML += `<div class="msg bot-msg"><b>Bot:</b><br><img src="${data.content}"></div>`;
-            } else {
-                chatBox.innerHTML += `<div class="msg bot-msg"><b>Bot:</b> ${data.content}</div>`;
+        // Automatic Welcome Message
+        window.onload = () => {
+            chatBox.innerHTML += `
+                <div class="msg bot-msg">
+                    <b>Brainbox:</b><br>
+                    Hello! I am Brainbox. How can I help you today? Try asking me to draw something or solve a math problem!
+                </div>`;
+        };
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            chatBox.innerHTML += `<div class="msg user-msg"><b>You:</b><br>${message}</div>`;
+            userInput.value = ''; 
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+                
+                if (data.type === 'image') {
+                    chatBox.innerHTML += `<div class="msg bot-msg"><b>Brainbox:</b><br><img src="${data.content}"></div>`;
+                } else {
+                    chatBox.innerHTML += `<div class="msg bot-msg"><b>Brainbox:</b><br>${data.content}</div>`;
+                }
+            } catch (error) {
+                chatBox.innerHTML += `<div class="msg bot-msg" style="color: #ff4444;"><b>Error:</b> Server connection failed.</div>`;
             }
-            input.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
         }
+
+        function clearChat() {
+            if (confirm("Clear all messages?")) {
+                chatBox.innerHTML = `<div class="msg bot-msg"><b>Brainbox:</b><br>Chat cleared!</div>`;
+            }
+        }
+
+        userInput.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
     </script>
 </body>
 </html>
