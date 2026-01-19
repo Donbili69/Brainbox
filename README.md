@@ -41,5 +41,7 @@ Access the global live link here:
 ├── .gitignore        # Keeps node_modules out of the repo
 └── README.md         # Documentation and Overview
 
+---
+
 ## ⚖️ License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
