@@ -15,14 +15,14 @@ app.post('/chat', async (req, res) => {
         const subject = input.replace("draw", "").replace("image", "").replace("a", "").trim();
         const imageUrl = `https://loremflickr.com/800/600/${subject || 'robot'}`;
         res.json({ type: 'image', content: imageUrl });
-    } 
-    
+    }
+
     // 2. BASIC MATH SOLVER (No API needed!)
     else if (/\d+[\+\-\*\/]\d+/.test(input)) {
         try {
             // This safely calculates simple math like 5+5 or 10*2
             const equation = input.match(/\d+[\+\-\*\/]\d+/)[0];
-            const result = eval(equation); 
+            const result = eval(equation);
             res.json({ type: 'text', content: `📊 Math Result: The answer to ${equation} is **${result}**.` });
         } catch (e) {
             res.json({ type: 'text', content: "I see a math problem, but it's a bit too complex for my offline mode!" });
@@ -45,7 +45,7 @@ app.post('/chat', async (req, res) => {
     }
 });
 
-app.listen(3000, () => {
-    console.log("🚀 SERVER STARTED!");
-    console.log("🔗 Open: http://localhost:3000");
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`🚀 BRAINBOX RUNNING ON PORT ${PORT}`);
 });
