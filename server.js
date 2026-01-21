@@ -1,39 +1,48 @@
 const express = require('express');
-const cors = require('cors');
-const app = express();
+const OpenAI = require('openai');
+require('dotenv').config();
 
-app.use(cors());
+const app = express();
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static('public')); // This serves your frontend files
+
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+});
 
 app.post('/chat', async (req, res) => {
-    const { message } = req.body;
-    const input = message.toLowerCase();
+    const userMessage = req.body.message;
 
-    // 1. Image Logic
-    if (input.includes("draw") || input.includes("image") || input.includes("picture")) {
-        const subject = input.replace(/draw|image|picture|a|an/g, "").trim();
-        const imageUrl = `https://loremflickr.com/800/600/${subject || 'robot'}`;
-        return res.json({ type: 'image', content: imageUrl });
-    } 
+    try {
+        const lowerMessage = userMessage.toLowerCase();
+        
+        // CHECK FOR IMAGE REQUEST
+        if (lowerMessage.includes("draw") || lowerMessage.includes("generate image") || lowerMessage.includes("picture of")) {
+            const imageResponse = await openai.images.generate({
+                model: "dall-e-3",
+                prompt: userMessage,
+                n: 1,
+                size: "1024x1024",
+            });
+            return res.json({ reply: imageResponse.data[0].url, type: 'image' });
+        }
 
-    // 2. Math Logic
-    const mathMatch = input.match(/(\d+)\s*([\+\-\*\/])\s*(\d+)/);
-    if (mathMatch) {
-        const num1 = parseFloat(mathMatch[1]);
-        const op = mathMatch[2];
-        const num2 = parseFloat(mathMatch[3]);
-        let result = 0;
-        if (op === '+') result = num1 + num2;
-        if (op === '-') result = num1 - num2;
-        if (op === '*') result = num1 * num2;
-        if (op === '/') result = num1 / num2;
-        return res.json({ type: 'text', content: `📊 The answer is **${result}**.` });
+        // OTHERWISE, TEXT RESPONSE (GPT-4o)
+        const chatCompletion = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+                { role: "system", content: "You are Brainbox, a helpful and professional AI assistant with real-time knowledge." },
+                { role: "user", content: userMessage }
+            ],
+        });
+
+        res.json({ reply: chatCompletion.choices[0].message.content, type: 'text' });
+
+    } catch (error) {
+        console.error("OpenAI Error:", error);
+        res.status(500).json({ reply: "I ran into an error. Please check your API key/credits." });
     }
-
-    // 3. Default Response
-    res.json({ type: 'text', content: `I heard: "${message}". I can solve math (e.g., 5 + 5) or draw images (e.g., 'draw a space city')!` });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server live on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server active on port ${PORT}`));
